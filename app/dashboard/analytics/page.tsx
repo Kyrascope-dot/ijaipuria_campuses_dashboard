@@ -31,7 +31,7 @@ const COLORS = [
 ];
 
 export default function AnalyticsPage() {
-  const { data, isLoading } = useDashboardSummary("jimn");
+  const { data, isLoading } = useDashboardSummary({ siteKey: "jimn" });
   const loading = isLoading || !data;
 
   // console.log("data", data);

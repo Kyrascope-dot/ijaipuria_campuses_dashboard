@@ -335,7 +335,7 @@ function DonutChart({
               fontSize: 12,
               boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
             }}
-            formatter={(value: any, name: string) => {
+            formatter={(value: any, name: any) => {
               const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
               return [`${value} (${pct}%)`, name];
             }}
@@ -383,7 +383,7 @@ function FilterSelect({
         {label}
       </label>
       <div className="flex items-center gap-1">
-        <Select value={value} onValueChange={onValueChange}>
+        <Select value={value} onValueChange={(v: string | null) => onValueChange(v ?? "")}>
           <SelectTrigger
             className={`${label === "Course Title" ? "w-full min-w-100" : "w-full min-w-35"} `}
           >

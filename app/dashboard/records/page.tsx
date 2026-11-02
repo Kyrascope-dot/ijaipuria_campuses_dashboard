@@ -147,7 +147,7 @@ export default function RecordsPage() {
       "Registered At",
     ];
     const rows = students.map((s: any) => [
-      `${s.first_name} ${s.last_name}`,
+      s.first_name && s.last_name ? `${s.first_name} ${s.last_name}` : (s.display_name || s.email),
       s.email,
       s.batch ?? "",
       s.groups?.map((g: any) => decodeHTML(g.title)).join("; ") ?? "",
@@ -188,82 +188,94 @@ export default function RecordsPage() {
           />
         </div>
 
-        <Select
-          value={batch || "all"}
-          onValueChange={(v) => {
-            setBatch(!v || v === "all" ? "" : v);
-            setGroup("");
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Batches" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Batches</SelectItem>
-            {batches.map((b) => (
-              <SelectItem key={b} value={b}>
-                {b}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Batch</label>
+          <Select
+            value={batch || "all"}
+            onValueChange={(v) => {
+              setBatch(!v || v === "all" ? "" : v);
+              setGroup("");
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Batches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Batches</SelectItem>
+              {batches.map((b) => (
+                <SelectItem key={b} value={b}>
+                  {b}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select
-          value={group || "all"}
-          onValueChange={(v) => {
-            setGroup(!v || v === "all" ? "" : v);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All Groups" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Groups</SelectItem>
-            {filteredGroups.map((g) => (
-              <SelectItem key={g.wpId} value={g.title}>
-                {decodeHTML(g.title)} ({g.totalStudents})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Group</label>
+          <Select
+            value={group || "all"}
+            onValueChange={(v) => {
+              setGroup(!v || v === "all" ? "" : v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[320px]">
+              <SelectValue placeholder="All Groups" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Groups</SelectItem>
+              {filteredGroups.map((g) => (
+                <SelectItem key={g.wpId} value={g.title}>
+                  {decodeHTML(g.title)} ({g.totalStudents})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select
-          value={role || "all"}
-          onValueChange={(v) => {
-            setRole(!v || v === "all" ? "" : v);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="All Roles" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="customer">Customer</SelectItem>
-            <SelectItem value="subscriber">Subscriber</SelectItem>
-            <SelectItem value="wdm_instructor">Instructor</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Role</label>
+          <Select
+            value={role || "all"}
+            onValueChange={(v) => {
+              setRole(!v || v === "all" ? "" : v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="customer">Customer</SelectItem>
+              <SelectItem value="subscriber">Subscriber</SelectItem>
+              <SelectItem value="wdm_instructor">Instructor</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select
-          value={courseStatus || "all"}
-          onValueChange={(v) => {
-            setCourseStatus(!v || v === "all" ? "" : v);
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Course Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="not_started">Not Started</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Course Status</label>
+          <Select
+            value={courseStatus || "all"}
+            onValueChange={(v) => {
+              setCourseStatus(!v || v === "all" ? "" : v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="not_started">Not Started</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {activeFilters > 0 && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -342,7 +354,7 @@ export default function RecordsPage() {
                   onClick={() => setSelectedId(s._id)}
                 >
                   <TableCell className="font-medium">
-                    {s.first_name} {s.last_name}
+                    {s.first_name && s.last_name ? `${s.first_name} ${s.last_name}` : s.display_name || s.email}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {s.email}
