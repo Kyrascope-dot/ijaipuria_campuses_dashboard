@@ -502,8 +502,8 @@ export default function OverviewPage() {
               label="Campus Name"
               value=""
               onValueChange={() => {}}
-              options={[{ value: "jimn", label: "JIMN – Noida" }]}
-              allLabel="JIMN – Noida"
+              options={[{ value: "jimn", label: "Noida" }]}
+              allLabel="Noida"
             />
             <FilterSelect
               label="Academic Year"
