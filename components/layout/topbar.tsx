@@ -38,9 +38,9 @@ export function Topbar() {
   };
 
   return (
-    <header className="flex items-center justify-between h-14 md:h-16 px-4 md:px-6 border-b bg-card">
-      <div className="pl-10 md:pl-0">
-        <h1 className="text-lg md:text-xl font-semibold">{title}</h1>
+    <header className="flex items-center justify-between h-14 lg:h-16 px-4 lg:px-6 border-b bg-card">
+      <div className="pl-10 lg:pl-0">
+        <h1 className="text-lg lg:text-xl font-semibold">{title}</h1>
         <nav className="text-xs text-muted-foreground hidden sm:block">
           {breadcrumb.map((part, i) => (
             <span key={i}>

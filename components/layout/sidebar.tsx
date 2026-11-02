@@ -54,7 +54,7 @@ export function Sidebar() {
         )}
         <button
           onClick={() => setMobileOpen(false)}
-          className="md:hidden p-1 rounded hover:bg-muted text-muted-foreground"
+          className="lg:hidden p-1 rounded hover:bg-muted text-muted-foreground"
         >
           <X className="h-5 w-5" />
         </button>
@@ -119,7 +119,7 @@ export function Sidebar() {
       {/* Collapse toggle — desktop only */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="hidden md:flex items-center justify-center h-10 border-t text-muted-foreground hover:text-foreground transition-colors"
+        className="hidden lg:flex items-center justify-center h-10 border-t text-muted-foreground hover:text-foreground transition-colors"
       >
         {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
       </button>
@@ -131,7 +131,7 @@ export function Sidebar() {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-card border shadow-sm"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-card border shadow-sm"
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -139,7 +139,7 @@ export function Sidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/40 z-40"
+          className="lg:hidden fixed inset-0 bg-black/40 z-40"
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -147,7 +147,7 @@ export function Sidebar() {
       {/* Mobile sidebar — slides in */}
       <aside
         className={cn(
-          "md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-card flex flex-col transition-transform duration-300",
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-card flex flex-col transition-transform duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -157,7 +157,7 @@ export function Sidebar() {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col border-r bg-card transition-all duration-300 h-screen sticky top-0",
+          "hidden lg:flex flex-col border-r bg-card transition-all duration-300 h-screen sticky top-0",
           collapsed ? "w-16" : "w-64"
         )}
       >
