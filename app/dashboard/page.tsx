@@ -25,6 +25,11 @@ import {
   PieChart,
   Pie,
   Cell,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip as ReTooltip,
   Legend,
@@ -361,18 +366,124 @@ function DonutChart({
   );
 }
 
+function CourseCompletionArea({
+  courses,
+  loading,
+  topN = 10,
+}: {
+  courses: CourseRow[];
+  loading: boolean;
+  topN?: number;
+}) {
+  if (loading) {
+    return <Skeleton className="h-72 w-full" />;
+  }
+
+  const top = courses.slice(0, topN);
+  const truncLen = topN <= 10 ? 18 : topN <= 20 ? 12 : 8;
+  const data = top.map((c, i) => {
+    const total = c.enrolled || 1;
+    const decoded = decodeHTML(c.title);
+    return {
+      name: decoded.length > truncLen ? decoded.slice(0, truncLen) + "…" : decoded,
+      fullName: decoded,
+      index: i + 1,
+      "Completed %": Math.round((c.completed / total) * 100),
+      "In Progress %": Math.round((c.inProgress / total) * 100),
+      "Yet to Start %": Math.round((c.notStarted / total) * 100),
+    };
+  });
+
+  const showIndex = topN > 20;
+  const tickInterval = topN <= 10 ? 0 : topN <= 20 ? 1 : 3;
+  const fontSize = topN <= 10 ? 10 : topN <= 20 ? 9 : 8;
+
+  return (
+    <ResponsiveContainer width="100%" height={320}>
+      <AreaChart data={data}>
+        <defs>
+          <linearGradient id="cwGradCompleted" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={STATUS_COLORS.completed} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={STATUS_COLORS.completed} stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="cwGradInProgress" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={STATUS_COLORS.inProgress} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={STATUS_COLORS.inProgress} stopOpacity={0.05} />
+          </linearGradient>
+          <linearGradient id="cwGradNotStarted" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={STATUS_COLORS.notStarted} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={STATUS_COLORS.notStarted} stopOpacity={0.05} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+        <XAxis
+          dataKey={showIndex ? "index" : "name"}
+          tick={{ fontSize }}
+          angle={showIndex ? 0 : -30}
+          textAnchor={showIndex ? "middle" : "end"}
+          height={showIndex ? 30 : 60}
+          interval={tickInterval}
+        />
+        <YAxis
+          tick={{ fontSize: 11 }}
+          domain={[0, 100]}
+          tickFormatter={(v) => `${v}%`}
+        />
+        <ReTooltip
+          contentStyle={{
+            backgroundColor: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+          labelFormatter={(_, payload) => {
+            const p = payload?.[0]?.payload;
+            if (p?.fullName) return showIndex ? `#${p.index} ${p.fullName}` : p.fullName;
+            return _;
+          }}
+          formatter={(value: any, name: any) => [`${value}%`, name]}
+        />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Area
+          type="monotone"
+          dataKey="Completed %"
+          stroke={STATUS_COLORS.completed}
+          strokeWidth={2}
+          fill="url(#cwGradCompleted)"
+        />
+        <Area
+          type="monotone"
+          dataKey="In Progress %"
+          stroke={STATUS_COLORS.inProgress}
+          strokeWidth={2}
+          fill="url(#cwGradInProgress)"
+        />
+        <Area
+          type="monotone"
+          dataKey="Yet to Start %"
+          stroke={STATUS_COLORS.notStarted}
+          strokeWidth={2}
+          fill="url(#cwGradNotStarted)"
+        />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
 function FilterSelect({
   label,
   value,
   onValueChange,
   options,
   allLabel = "All",
+  required = false,
 }: {
   label: string;
   value: string;
   onValueChange: (v: string) => void;
   options: { value: string; label: string }[];
   allLabel?: string;
+  required?: boolean;
 }) {
   const hasValue = value !== "";
   const displayLabel = hasValue
@@ -380,21 +491,21 @@ function FilterSelect({
     : allLabel;
 
   return (
-    <div className="flex flex-col gap-1 min-w-[160px]">
+    <div className="flex flex-col gap-1 min-w-0 w-full sm:w-auto sm:min-w-[160px]">
       <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
         {label}
       </label>
       <div className="flex items-center gap-1">
         <Select value={value} onValueChange={(v: string | null) => onValueChange(v ?? "")}>
           <SelectTrigger
-            className={`${label === "Course Title" ? "w-full min-w-100" : "w-full min-w-35"} `}
+            className={`${label === "Course Title" ? "w-full sm:min-w-100" : "w-full sm:min-w-35"} `}
           >
             <span data-slot="select-value" className="flex flex-1 text-left line-clamp-1">
               {displayLabel}
             </span>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{allLabel}</SelectItem>
+            {!required && <SelectItem value="">{allLabel}</SelectItem>}
             {options.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
@@ -402,7 +513,7 @@ function FilterSelect({
             ))}
           </SelectContent>
         </Select>
-        {hasValue && (
+        {hasValue && !required && (
           <button
             onClick={() => onValueChange("")}
             className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -430,6 +541,7 @@ export default function OverviewPage() {
   const [trimester, setTrimester] = useState("");
   const [courseId, setCourseId] = useState("");
   const [tablePage, setTablePage] = useState(1);
+  const [topN, setTopN] = useState(10);
 
   const { data: sites } = useSites();
   const { data: groupData } = useGroups(siteKey);
@@ -500,7 +612,7 @@ export default function OverviewPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight">
           iJaipuria Dashboard
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -511,7 +623,7 @@ export default function OverviewPage() {
       {/* Filter Bar */}
       <Card>
         <CardContent className="py-4">
-          <div className="flex flex-wrap items-end gap-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-end gap-3 sm:gap-4">
             <FilterSelect
               label="Campus Name"
               value={siteKey}
@@ -524,7 +636,7 @@ export default function OverviewPage() {
                 setTablePage(1);
               }}
               options={(sites ?? Object.entries(CAMPUS_LABELS).map(([k, l]) => ({ key: k, label: l }))).map((s) => ({ value: s.key, label: s.label }))}
-              allLabel="All Campuses"
+              required
             />
             <FilterSelect
               label="Academic Year"
@@ -553,6 +665,7 @@ export default function OverviewPage() {
               }}
               options={trimesterOptions}
             />
+            <div className="col-span-2 sm:col-span-1 sm:contents">
             <FilterSelect
               label="Course Title"
               value={courseId}
@@ -562,6 +675,7 @@ export default function OverviewPage() {
               }}
               options={courseOptions}
             />
+            </div>
             {activeFilterCount > 0 && (
               <button
                 onClick={clearAllFilters}
@@ -616,25 +730,8 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* Main Content: Table + Donut */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Course Wise Completion Status */}
-        <Card className="xl:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">
-              Course Wise Completion Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <CourseTable
-              courses={courses}
-              loading={loading}
-              page={tablePage}
-              onPageChange={setTablePage}
-            />
-          </CardContent>
-        </Card>
-
+      {/* Charts: Donut + Area side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Overall Completion Status */}
         <Card>
           <CardHeader className="pb-3">
@@ -687,7 +784,47 @@ export default function OverviewPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Top Courses Completion Rate */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="text-base font-semibold">
+                Top Courses — Completion Rate (%)
+              </CardTitle>
+              <select
+                value={topN}
+                onChange={(e) => setTopN(Number(e.target.value))}
+                className="text-xs border rounded-md px-2 py-1 bg-background text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value={10}>Top 10</option>
+                <option value={20}>Top 20</option>
+                <option value={50}>Top 50</option>
+              </select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <CourseCompletionArea courses={courses} loading={loading} topN={topN} />
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Course Table — full width */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">
+            Course Wise Completion Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <CourseTable
+            courses={courses}
+            loading={loading}
+            page={tablePage}
+            onPageChange={setTablePage}
+          />
+        </CardContent>
+      </Card>
 
       {/* Last sync */}
       {data?.lastSyncAt && (

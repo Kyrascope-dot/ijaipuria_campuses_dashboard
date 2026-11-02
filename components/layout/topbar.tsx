@@ -38,10 +38,10 @@ export function Topbar() {
   };
 
   return (
-    <header className="flex items-center justify-between h-16 px-6 border-b bg-card">
-      <div>
-        <h1 className="text-xl font-semibold">{title}</h1>
-        <nav className="text-xs text-muted-foreground">
+    <header className="flex items-center justify-between h-14 md:h-16 px-4 md:px-6 border-b bg-card">
+      <div className="pl-10 md:pl-0">
+        <h1 className="text-lg md:text-xl font-semibold">{title}</h1>
+        <nav className="text-xs text-muted-foreground hidden sm:block">
           {breadcrumb.map((part, i) => (
             <span key={i}>
               {i > 0 && <span className="mx-1">/</span>}
@@ -56,7 +56,8 @@ export function Topbar() {
         ) : (
           <RefreshCw className="mr-2 h-4 w-4" />
         )}
-        Sync Data
+        <span className="hidden sm:inline">Sync Data</span>
+        <span className="sm:hidden">Sync</span>
       </Button>
     </header>
   );

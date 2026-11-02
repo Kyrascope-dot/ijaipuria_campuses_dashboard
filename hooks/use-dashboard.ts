@@ -87,6 +87,16 @@ export function useSyncStatus() {
   });
 }
 
+export function useOverallSummary() {
+  return useQuery({
+    queryKey: ["dashboard", "overall"],
+    queryFn: async () => {
+      const { data } = await axios.get("/api/dashboard/overall");
+      return data;
+    },
+  });
+}
+
 export function useSites() {
   return useQuery({
     queryKey: ["sites"],

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -12,29 +12,29 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   BarChart3,
-  FileText,
-  Database,
-  Settings,
-  Users,
   LogOut,
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Menu,
+  X,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  // { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  // { href: "/dashboard/reports", label: "Course Reports", icon: FileText },
-  // { href: "/dashboard/records", label: "Student Reports", icon: Users },
-  // { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/overall", label: "Overall", icon: BarChart3 },
+  { href: "/dashboard", label: "Campus Wise", icon: LayoutDashboard },
 ];
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const { data: user } = useCurrentUser();
   const logout = useLogout();
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const initials = user?.name
     ?.split(" ")
@@ -43,20 +43,21 @@ export function Sidebar() {
     .toUpperCase()
     .slice(0, 2) ?? "?";
 
-  return (
-    <aside
-      className={cn(
-        "flex flex-col border-r bg-card transition-all duration-300 h-screen sticky top-0",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="flex h-16 items-center px-4 border-b">
+      <div className="flex h-16 items-center px-4 border-b justify-between">
         {collapsed ? (
           <Image src="/logo.png" alt="iJaipuria" width={32} height={32} className="shrink-0 object-contain" />
         ) : (
           <Image src="/logo.png" alt="iJaipuria" width={130} height={36} className="object-contain" />
         )}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden p-1 rounded hover:bg-muted text-muted-foreground"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -115,13 +116,53 @@ export function Sidebar() {
         </Button>
       </div>
 
-      {/* Collapse toggle */}
+      {/* Collapse toggle — desktop only */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-center h-10 border-t text-muted-foreground hover:text-foreground transition-colors"
+        className="hidden md:flex items-center justify-center h-10 border-t text-muted-foreground hover:text-foreground transition-colors"
       >
         {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
       </button>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-card border shadow-sm"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/40 z-40"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile sidebar — slides in */}
+      <aside
+        className={cn(
+          "md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-card flex flex-col transition-transform duration-300",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside
+        className={cn(
+          "hidden md:flex flex-col border-r bg-card transition-all duration-300 h-screen sticky top-0",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
