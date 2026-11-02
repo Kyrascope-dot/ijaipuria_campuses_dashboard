@@ -59,9 +59,10 @@ export async function GET(request: Request) {
   }
 
   // ── Queries ──
-  const [totalStudents, lastSync] = await Promise.all([
+  const [totalStudents, lastSync, lastSyncWithCourses] = await Promise.all([
     Student.countDocuments(studentFilter),
     SyncLog.findOne({ siteKey, status: "completed" }).sort({ completedAt: -1 }).lean(),
+    SyncLog.findOne({ siteKey, status: "completed", allCoursesCount: { $gt: 0 } }).sort({ completedAt: -1 }).lean(),
   ]);
 
   // Course distribution with filters
@@ -107,19 +108,29 @@ export async function GET(request: Request) {
 
   const uniqueCourses = courseDistribution.length;
 
-  // Course offering: unfiltered = all courses from WordPress (stored in SyncLog)
-  // filtered = unique courses from matching groups
-  let courseOfferingCount = (lastSync as any)?.allCoursesCount || uniqueCourses;
+  let courseOfferingCount: number;
   if (filterBatch || filterTrimester) {
     const offeringGroupQuery: any = { siteKey };
     if (filterBatch) offeringGroupQuery.batch = filterBatch;
     if (filterTrimester) offeringGroupQuery.trimester = parseInt(filterTrimester, 10);
-    const allGroupCourses = await Group.aggregate([
+    const filteredGroupCourses = await Group.aggregate([
       { $match: offeringGroupQuery },
       { $unwind: "$courses" },
       { $group: { _id: "$courses.id" } },
     ]);
-    courseOfferingCount = allGroupCourses.length || uniqueCourses;
+    courseOfferingCount = filteredGroupCourses.length || uniqueCourses;
+  } else {
+    const storedCount = (lastSyncWithCourses as any)?.allCoursesCount;
+    if (storedCount && storedCount > 0) {
+      courseOfferingCount = storedCount;
+    } else {
+      const allGroupCourses = await Group.aggregate([
+        { $match: { siteKey } },
+        { $unwind: "$courses" },
+        { $group: { _id: "$courses.id" } },
+      ]);
+      courseOfferingCount = allGroupCourses.length || uniqueCourses;
+    }
   }
 
   const completionRate =

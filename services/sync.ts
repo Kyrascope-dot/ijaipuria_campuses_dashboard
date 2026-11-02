@@ -14,7 +14,57 @@ export async function syncSite(site: SiteConfig) {
   const Group = getGroupModel(site.key);
 
   try {
-    // ── 1. Sync students ──
+    // ── 1. Sync groups first (fast, gives us all_courses count) ──
+    let groupsFetched = 0;
+    let allCoursesCount = 0;
+    try {
+      const { data: groupsData } = await client.get<WPGroupsResponse>("/groups", {
+        params: { page: 1, per_page: 5000 },
+      });
+
+      if (groupsData.groups?.length) {
+        groupsFetched = groupsData.groups.length;
+
+        const groupOps = groupsData.groups.map((g) => {
+          const trimMatch = g.title.match(/(?:[\s_-]|^)T(?:erm[\s_]*)?(\d+)/i);
+          const trimester = trimMatch ? parseInt(trimMatch[1], 10) : null;
+
+          return {
+            updateOne: {
+              filter: { siteKey: site.key, wpId: g.id },
+              update: {
+                $set: {
+                  siteKey: site.key,
+                  wpId: g.id,
+                  title: g.title,
+                  status: g.status,
+                  createdAt_wp: g.created_at,
+                  batch: g.batch,
+                  academicYear: g.academic_year,
+                  trimester,
+                  leaderIds: g.leader_ids,
+                  courseIds: g.course_ids,
+                  courses: g.courses ?? g.course_ids.map((id: number) => ({ id, title: "" })),
+                  studentIds: g.student_ids,
+                  totalStudents: g.total_students,
+                  totalCourses: g.total_courses,
+                  syncedAt: new Date(),
+                },
+              },
+              upsert: true,
+            },
+          };
+        });
+
+        await Group.bulkWrite(groupOps, { ordered: false });
+      }
+
+      allCoursesCount = groupsData.all_courses?.length ?? 0;
+    } catch {
+      // Groups API may not exist yet on some sites
+    }
+
+    // ── 2. Sync students ──
     let page = 1;
     let totalPages = 1;
     let totalFetched = 0;
@@ -83,75 +133,19 @@ export async function syncSite(site: SiteConfig) {
       page++;
     }
 
-    // ── 2. Sync groups ──
-    let groupsFetched = 0;
-    let allCoursesCount = 0;
-    try {
-      const { data: groupsData } = await client.get<WPGroupsResponse>("/groups", {
-        params: { page: 1, per_page: 5000 },
-      });
-
-      if (groupsData.groups?.length) {
-        groupsFetched = groupsData.groups.length;
-
-        const groupOps = groupsData.groups.map((g) => {
-          // Extract trimester: "_T5_", " T6 ", "_Term 04_", " Term 02"
-          const trimMatch = g.title.match(/(?:[\s_-]|^)T(?:erm[\s_]*)?(\d+)/i);
-          const trimester = trimMatch ? parseInt(trimMatch[1], 10) : null;
-
-          return {
-            updateOne: {
-              filter: { siteKey: site.key, wpId: g.id },
-              update: {
-                $set: {
-                  siteKey: site.key,
-                  wpId: g.id,
-                  title: g.title,
-                  status: g.status,
-                  createdAt_wp: g.created_at,
-                  batch: g.batch,
-                  academicYear: g.academic_year,
-                  trimester,
-                  leaderIds: g.leader_ids,
-                  courseIds: g.course_ids,
-                  courses: g.courses ?? g.course_ids.map((id: number) => ({ id, title: "" })),
-                  studentIds: g.student_ids,
-                  totalStudents: g.total_students,
-                  totalCourses: g.total_courses,
-                  syncedAt: new Date(),
-                },
-              },
-              upsert: true,
-            },
-          };
-        });
-
-        await Group.bulkWrite(groupOps, { ordered: false });
-
-        // ── 3. Update students with batch/academicYear from their groups ──
-        const batchGroups = groupsData.groups.filter((g) => g.batch);
-        for (const g of batchGroups) {
-          if (g.student_ids.length > 0) {
-            await Student.updateMany(
-              {
-                siteKey: site.key,
-                wpId: { $in: g.student_ids },
-                $or: [{ batch: null }, { batch: { $exists: false } }],
-              },
-              {
-                $set: {
-                  batch: g.batch,
-                  academicYear: g.academic_year,
-                },
-              },
-            );
-          }
-        }
+    // ── 3. Update students with batch/academicYear from their groups ──
+    const groups = await Group.find({ siteKey: site.key, batch: { $ne: null } }).select("batch academicYear studentIds").lean();
+    for (const g of groups) {
+      if (g.studentIds.length > 0) {
+        await Student.updateMany(
+          {
+            siteKey: site.key,
+            wpId: { $in: g.studentIds },
+            $or: [{ batch: null }, { batch: { $exists: false } }],
+          },
+          { $set: { batch: g.batch, academicYear: g.academicYear } },
+        );
       }
-
-      allCoursesCount = groupsData.all_courses?.length ?? 0;
-    } catch {
-      // Groups API may not exist yet on some sites — don't fail the whole sync
     }
 
     log.status = "completed";

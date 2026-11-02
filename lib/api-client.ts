@@ -9,7 +9,7 @@ export function createSiteClient(site: SiteConfig) {
       "X-API-User": site.apiUser,
       "X-API-Pass": site.apiPass,
     },
-    timeout: 120_000,
+    timeout: 300_000,
   });
 }
 
