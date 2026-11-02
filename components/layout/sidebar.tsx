@@ -25,8 +25,8 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   // { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/reports", label: "Course Reports", icon: FileText },
-  { href: "/dashboard/records", label: "Student Reports", icon: Users },
+  // { href: "/dashboard/reports", label: "Course Reports", icon: FileText },
+  // { href: "/dashboard/records", label: "Student Reports", icon: Users },
   // { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
