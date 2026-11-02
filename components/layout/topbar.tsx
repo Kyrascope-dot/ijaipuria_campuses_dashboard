@@ -26,10 +26,10 @@ export function Topbar() {
   const breadcrumb = getBreadcrumb(pathname);
 
   const handleSync = () => {
-    const t = toast.loading("Syncing data from website...");
+    const t = toast.loading("Syncing data from all campuses...");
     sync.mutate(undefined, {
-      onSuccess: (data) => {
-        toast.success(`Sync complete: ${data.totalFetched} students fetched`, { id: t });
+      onSuccess: () => {
+        toast.success("Sync complete for all campuses", { id: t });
       },
       onError: (error: any) => {
         toast.error(error?.response?.data?.error ?? "Sync failed", { id: t });

@@ -40,7 +40,8 @@ export function useSyncData() {
 
   return useMutation({
     mutationFn: async (siteKey?: string) => {
-      const { data } = await axios.post("/api/sync", { siteKey: siteKey ?? "jimn" });
+      const body = siteKey ? { siteKey } : {};
+      const { data } = await axios.post("/api/sync", body);
       return data;
     },
     onSuccess: () => {
@@ -82,6 +83,16 @@ export function useSyncStatus() {
     queryFn: async () => {
       const { data } = await axios.get("/api/sync/status");
       return data.logs;
+    },
+  });
+}
+
+export function useSites() {
+  return useQuery({
+    queryKey: ["sites"],
+    queryFn: async () => {
+      const { data } = await axios.get("/api/sites");
+      return data.sites as Array<{ key: string; label: string }>;
     },
   });
 }

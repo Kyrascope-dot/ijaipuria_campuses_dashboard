@@ -12,17 +12,29 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const siteKey: string = body.siteKey ?? getSiteConfigs()[0]?.key;
+  const siteKey: string | undefined = body.siteKey;
 
-  const site = getSiteConfig(siteKey);
-  if (!site) {
-    return NextResponse.json({ error: `Site "${siteKey}" not configured` }, { status: 400 });
+  if (siteKey) {
+    const site = getSiteConfig(siteKey);
+    if (!site) {
+      return NextResponse.json({ error: `Site "${siteKey}" not configured` }, { status: 400 });
+    }
+    try {
+      const result = await syncSite(site);
+      return NextResponse.json(result);
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message ?? "Sync failed" }, { status: 500 });
+    }
   }
 
-  try {
-    const result = await syncSite(site);
-    return NextResponse.json(result);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message ?? "Sync failed" }, { status: 500 });
+  const sites = getSiteConfigs();
+  const results: Record<string, any> = {};
+  for (const site of sites) {
+    try {
+      results[site.key] = await syncSite(site);
+    } catch (error: any) {
+      results[site.key] = { status: "failed", error: error.message };
+    }
   }
+  return NextResponse.json({ status: "completed", results });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useDashboardSummary, useGroups } from "@/hooks/use-dashboard";
+import { useDashboardSummary, useGroups, useSites } from "@/hooks/use-dashboard";
 import { decodeHTML } from "@/lib/decode-html";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,7 +10,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   BookOpen,
@@ -376,6 +375,9 @@ function FilterSelect({
   allLabel?: string;
 }) {
   const hasValue = value !== "";
+  const displayLabel = hasValue
+    ? options.find((o) => o.value === value)?.label ?? value
+    : allLabel;
 
   return (
     <div className="flex flex-col gap-1 min-w-[160px]">
@@ -387,7 +389,9 @@ function FilterSelect({
           <SelectTrigger
             className={`${label === "Course Title" ? "w-full min-w-100" : "w-full min-w-35"} `}
           >
-            <SelectValue placeholder={allLabel} />
+            <span data-slot="select-value" className="flex flex-1 text-left line-clamp-1">
+              {displayLabel}
+            </span>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">{allLabel}</SelectItem>
@@ -412,23 +416,32 @@ function FilterSelect({
   );
 }
 
+const CAMPUS_LABELS: Record<string, string> = {
+  jimn: "Noida",
+  jiml: "Lucknow",
+  jimj: "Jaipur",
+  jimi: "Indore",
+};
+
 export default function OverviewPage() {
+  const [siteKey, setSiteKey] = useState("jimn");
   const [academicYear, setAcademicYear] = useState("");
   const [batch, setBatch] = useState("");
   const [trimester, setTrimester] = useState("");
   const [courseId, setCourseId] = useState("");
   const [tablePage, setTablePage] = useState(1);
 
-  const { data: groupData } = useGroups("jimn");
+  const { data: sites } = useSites();
+  const { data: groupData } = useGroups(siteKey);
 
   const summaryParams = useMemo(() => {
-    const p: Record<string, string> = { siteKey: "jimn" };
+    const p: Record<string, string> = { siteKey };
     if (academicYear) p.academicYear = academicYear;
     if (batch) p.batch = batch;
     if (trimester) p.trimester = trimester;
     if (courseId) p.courseId = courseId;
     return p;
-  }, [academicYear, batch, trimester, courseId]);
+  }, [siteKey, academicYear, batch, trimester, courseId]);
 
   const { data, isLoading } = useDashboardSummary(summaryParams);
   const loading = isLoading || !data;
@@ -479,6 +492,7 @@ export default function OverviewPage() {
     setBatch("");
     setTrimester("");
     setCourseId("");
+    setSiteKey("jimn");
     setTablePage(1);
   }
 
@@ -500,10 +514,17 @@ export default function OverviewPage() {
           <div className="flex flex-wrap items-end gap-4">
             <FilterSelect
               label="Campus Name"
-              value=""
-              onValueChange={() => {}}
-              options={[{ value: "jimn", label: "Noida" }]}
-              allLabel="Noida"
+              value={siteKey}
+              onValueChange={(v) => {
+                setSiteKey(v || "jimn");
+                setAcademicYear("");
+                setBatch("");
+                setTrimester("");
+                setCourseId("");
+                setTablePage(1);
+              }}
+              options={(sites ?? Object.entries(CAMPUS_LABELS).map(([k, l]) => ({ key: k, label: l }))).map((s) => ({ value: s.key, label: s.label }))}
+              allLabel="All Campuses"
             />
             <FilterSelect
               label="Academic Year"
