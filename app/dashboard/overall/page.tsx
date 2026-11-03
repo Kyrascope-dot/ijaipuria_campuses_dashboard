@@ -10,7 +10,9 @@ import {
   TrendingUp,
   BookOpen,
   Building2,
+  Info,
 } from "lucide-react";
+import { ChartInfo } from "@/components/ui/chart-info";
 import {
   AreaChart,
   Area,
@@ -473,7 +475,7 @@ export default function OverallPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-          Overall Campus Comparison
+          Overall Campus Progression
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Cross-campus analytics across all {campuses.length} campuses
@@ -523,9 +525,12 @@ export default function OverallPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">
-              Overall Completion Status
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-semibold">
+                Overall Completion Status
+              </CardTitle>
+              <ChartInfo tooltip="Donut chart showing the combined enrollment status across all campuses. Segments represent Completed, In Progress, and Yet to Start. The center percentage is (Total Completed / Total Enrolled) × 100 across all campuses." />
+            </div>
           </CardHeader>
           <CardContent>
             <OverallDonut grand={grand} loading={loading} />
@@ -569,9 +574,12 @@ export default function OverallPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">
-              Completion Rate by Campus
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-semibold">
+                Completion Rate by Campus
+              </CardTitle>
+              <ChartInfo tooltip="Horizontal progress bars comparing each campus's completion rate. Each bar shows (Completed Enrollments / Total Enrollments) × 100 for that campus, making it easy to compare performance across locations." />
+            </div>
           </CardHeader>
           <CardContent>
             <CompletionRateComparison campuses={campuses} loading={loading} />
@@ -582,9 +590,12 @@ export default function OverallPage() {
       {/* Row 2: Area Chart full width */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">
-            Campus Wise Completion Breakdown
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base font-semibold">
+              Campus Wise Completion Breakdown
+            </CardTitle>
+            <ChartInfo tooltip="Area chart showing the absolute count of Completed, In Progress, and Yet to Start enrollments for each campus. The stacked areas let you compare both the total volume and the status distribution across campuses side by side." />
+          </div>
         </CardHeader>
         <CardContent>
           <CompletionComparisonArea campuses={campuses} loading={loading} />

@@ -22,7 +22,7 @@ import {
 
 const navItems = [
   { href: "/dashboard/overall", label: "Overall", icon: BarChart3 },
-  { href: "/dashboard", label: "Campus Wise", icon: LayoutDashboard },
+  { href: "/dashboard/campus-wise", label: "Campus Wise", icon: LayoutDashboard },
 ];
 
 export function Sidebar() {
@@ -63,10 +63,7 @@ export function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
         {navItems.map((item) => {
-          const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(item.href);
+          const isActive = pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

@@ -1,13 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useSyncData } from "@/hooks/use-dashboard";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 const titles: Record<string, string> = {
-  "/dashboard": "Overview",
+  "/dashboard": "Dashboard",
+  "/dashboard/overall": "Overall",
+  "/dashboard/campus-wise": "Campus Wise",
   "/dashboard/analytics": "Analytics",
   "/dashboard/reports": "Course Reports",
   "/dashboard/records": "Student Reports",
@@ -21,21 +19,8 @@ function getBreadcrumb(pathname: string) {
 
 export function Topbar() {
   const pathname = usePathname();
-  const sync = useSyncData();
   const title = titles[pathname] ?? "Dashboard";
   const breadcrumb = getBreadcrumb(pathname);
-
-  const handleSync = () => {
-    const t = toast.loading("Syncing data from all campuses...");
-    sync.mutate(undefined, {
-      onSuccess: () => {
-        toast.success("Sync complete for all campuses", { id: t });
-      },
-      onError: (error: any) => {
-        toast.error(error?.response?.data?.error ?? "Sync failed", { id: t });
-      },
-    });
-  };
 
   return (
     <header className="flex items-center justify-between h-14 lg:h-16 px-4 lg:px-6 border-b bg-card">
@@ -50,15 +35,6 @@ export function Topbar() {
           ))}
         </nav>
       </div>
-      <Button variant="outline" size="sm" onClick={handleSync} disabled={sync.isPending}>
-        {sync.isPending ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <RefreshCw className="mr-2 h-4 w-4" />
-        )}
-        <span className="hidden sm:inline">Sync Data</span>
-        <span className="sm:hidden">Sync</span>
-      </Button>
     </header>
   );
 }
