@@ -30,11 +30,19 @@ export async function GET(request: Request) {
     ),
   ].sort();
 
-  const academicYears = [
-    ...new Set(
-      groups.filter((g) => g.academicYear).map((g) => g.academicYear as string),
-    ),
-  ].sort();
+  // Derive academic year from the latest batch only: "Batch 2026-2028" → "2026-27"
+  const allAcademicYears = batches
+    .map((b) => {
+      const match = b.match(/(\d{4})/);
+      if (!match) return null;
+      const startYear = parseInt(match[1], 10);
+      const nextYear = String(startYear + 1).slice(-2);
+      return `${startYear}-${nextYear}`;
+    })
+    .filter(Boolean) as string[];
+  const academicYears = allAcademicYears.length > 0
+    ? [allAcademicYears.sort().pop()!]
+    : [];
 
   const trimesters = [
     ...new Set(

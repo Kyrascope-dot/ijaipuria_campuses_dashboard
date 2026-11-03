@@ -28,10 +28,26 @@ export async function GET(request: Request) {
   const studentFilter: any = { siteKey };
   let courseIdFilter: number[] | null = null;
 
+  // If academic year filter is active, convert it to a batch filter
+  // "2026-27" → match batches starting with "2026"
+  let effectiveBatch = filterBatch;
+  if (filterAcademicYear && !filterBatch) {
+    const ayMatch = filterAcademicYear.match(/^(\d{4})/);
+    if (ayMatch) {
+      const startYear = ayMatch[1];
+      const batchGroups = await Group.find({
+        siteKey,
+        batch: { $regex: new RegExp(`^Batch ${startYear}`) },
+      }).select("batch").lean();
+      const matchedBatch = batchGroups[0]?.batch;
+      if (matchedBatch) effectiveBatch = matchedBatch;
+    }
+  }
+
   // If batch or trimester filter is active, find matching groups → filter students by wpId
-  if (filterBatch || filterTrimester) {
+  if (effectiveBatch || filterTrimester) {
     const groupQuery: any = { siteKey };
-    if (filterBatch) groupQuery.batch = filterBatch;
+    if (effectiveBatch) groupQuery.batch = effectiveBatch;
     if (filterTrimester) groupQuery.trimester = parseInt(filterTrimester, 10);
 
     const matchingGroups = await Group.find(groupQuery).select("studentIds courseIds").lean();
@@ -43,10 +59,6 @@ export async function GET(request: Request) {
     if (groupCourseIds.length > 0) {
       courseIdFilter = groupCourseIds;
     }
-  }
-
-  if (filterAcademicYear) {
-    studentFilter.academicYear = filterAcademicYear;
   }
 
   // Course-level filters for aggregation
@@ -109,9 +121,9 @@ export async function GET(request: Request) {
   const uniqueCourses = courseDistribution.length;
 
   let courseOfferingCount: number;
-  if (filterBatch || filterTrimester) {
+  if (effectiveBatch || filterTrimester) {
     const offeringGroupQuery: any = { siteKey };
-    if (filterBatch) offeringGroupQuery.batch = filterBatch;
+    if (effectiveBatch) offeringGroupQuery.batch = effectiveBatch;
     if (filterTrimester) offeringGroupQuery.trimester = parseInt(filterTrimester, 10);
     const filteredGroupCourses = await Group.aggregate([
       { $match: offeringGroupQuery },
