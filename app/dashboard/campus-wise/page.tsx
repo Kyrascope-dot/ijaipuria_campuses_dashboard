@@ -382,7 +382,8 @@ function CourseCompletionArea({
   }
 
   const top = courses.slice(0, topN);
-  const truncLen = topN <= 10 ? 18 : topN <= 20 ? 12 : 8;
+  const count = top.length;
+  const truncLen = count <= 10 ? 18 : count <= 20 ? 12 : 8;
   const data = top.map((c, i) => {
     const total = c.enrolled || 1;
     const decoded = decodeHTML(c.title);
@@ -396,9 +397,9 @@ function CourseCompletionArea({
     };
   });
 
-  const showIndex = topN > 20;
-  const tickInterval = topN <= 10 ? 0 : topN <= 20 ? 1 : 3;
-  const fontSize = topN <= 10 ? 10 : topN <= 20 ? 9 : 8;
+  const showIndex = count > 20;
+  const tickInterval = count <= 10 ? 0 : count <= 20 ? 1 : 3;
+  const fontSize = count <= 10 ? 10 : count <= 20 ? 9 : 8;
 
   return (
     <ResponsiveContainer width="100%" height={320}>
